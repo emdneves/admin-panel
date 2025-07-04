@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Security setup script for client deployment
+set -e
+
+echo "Setting up secure client deployment..."
+
+# Check if running as root (needed for firewall commands)
+if [[ $EUID -eq 0 ]]; then
+   echo "This script should NOT be run as root for security reasons."
+   echo "Please run as a regular user."
+   exit 1
+fi
+
+# Create production environment file
+echo "Creating production environment..."
+cat > .env.production <<EOF
+REACT_APP_API_URL=http://192.168.1.212:3000
+VITE_API_URL=http://192.168.1.212:3000
+EOF
+
+# Build the production version
+echo "Building production client..."
+npm run build
+
+# Get your public IPv4 address (most compatible)
+echo "Getting network information..."
+IPV4=$(curl -4 -s ifconfig.me 2>/dev/null || curl -4 -s ipinfo.io/ip 2>/dev/null)
+
+if [ -n "$IPV4" ]; then
+    echo "Your public IPv4 address: $IPV4"
+    echo "Internet access URL: http://$IPV4:5173"
+else
+    echo "Could not get IPv4 address. Using IPv6 might work on some networks."
+fi
+
+echo "Local network access: http://192.168.1.212:5173"
