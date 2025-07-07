@@ -41,6 +41,13 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
+  People as PeopleIcon,
+  Brightness7 as Brightness7Icon,
+  Brightness4 as Brightness4Icon,
+  LightMode as LightModeIcon,
+  Nightlight as NightlightIcon,
+  RocketLaunch as RocketLaunchIcon,
+  ListAlt as ListAltIcon,
 } from '@mui/icons-material';
 import { useContent } from '../../hooks/useContent';
 import ContentList from '../Content/ContentList';
@@ -54,6 +61,7 @@ import {
 } from '@mui/x-data-grid';
 import EntityTable from '../Table/EntityTable';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface DashboardPanelProps {
   buttonLabel: string;
@@ -101,7 +109,12 @@ const DashboardPanel: React.FC<PropsWithChildren<DashboardPanelProps>> = ({ butt
   </Paper>
 );
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  mode: 'light' | 'dark';
+  setMode: (mode: 'light' | 'dark') => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
   // Content type state
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
   const [selectedTypeIndex, setSelectedTypeIndex] = useState(0);
@@ -155,6 +168,13 @@ const Dashboard: React.FC = () => {
   const [sidebarMenuAnchorEl, setSidebarMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [sidebarMenuRow, setSidebarMenuRow] = useState<any>(null);
 
+  // Add state for enum options editing
+  const [enumOptions, setEnumOptions] = useState<Record<number, string[]>>({});
+
+  // Add state for edit enum options
+  const [editEnumOptions, setEditEnumOptions] = useState<Record<number, string[]>>({});
+
+  const { role: userRole, logout } = useAuth();
   const navigate = useNavigate();
 
   // Fetch content types on mount
@@ -206,23 +226,49 @@ const Dashboard: React.FC = () => {
   const handleRemoveField = (idx: number) => setNewFields(newFields.filter((_, i) => i !== idx));
   const handleFieldChange = (idx: number, key: 'name' | 'type' | 'optional' | 'relation', value: string | boolean) => {
     setNewFields(fields => fields.map((f, i) => i === idx ? { ...f, [key]: value } : f));
+    // Reset enum options if type changes
+    if (key === 'type' && value === 'enum') {
+      setEnumOptions(opts => ({ ...opts, [idx]: [''] }));
+    }
+  };
+  const handleEnumOptionChange = (fieldIdx: number, optIdx: number, value: string) => {
+    setEnumOptions(opts => ({
+      ...opts,
+      [fieldIdx]: opts[fieldIdx].map((opt, i) => i === optIdx ? value : opt)
+    }));
+  };
+  const handleAddEnumOption = (fieldIdx: number) => {
+    setEnumOptions(opts => ({
+      ...opts,
+      [fieldIdx]: [...(opts[fieldIdx] || []), '']
+    }));
+  };
+  const handleRemoveEnumOption = (fieldIdx: number, optIdx: number) => {
+    setEnumOptions(opts => ({
+      ...opts,
+      [fieldIdx]: opts[fieldIdx].filter((_, i) => i !== optIdx)
+    }));
   };
   const handleCreateType = async () => {
     if (!newTypeName.trim() || newFields.some(f => !f.name.trim())) {
       setCreateTypeError('Type name and all field names are required');
       return;
     }
+    // Attach enum options to fields
+    const fieldsWithOptions = newFields.map((f, idx) =>
+      f.type === 'enum' ? { ...f, options: (enumOptions[idx] || []).filter(opt => opt.trim()) } : f
+    );
     setCreateTypeLoading(true);
     setCreateTypeError(null);
     try {
-      const payload = { name: newTypeName, fields: newFields };
-      console.log('Creating content type with payload:', JSON.stringify(payload, null, 2));
+      const payload = { name: newTypeName, fields: fieldsWithOptions };
       const created = await api.createContentType(payload);
       setContentTypes(types => [...types, created]);
       setSelectedTypeIndex(contentTypes.length); // select the new type
       setShowCreateType(false);
       setNewTypeName('');
       setNewFields([{ name: '', type: 'text' }]);
+      setEnumOptions({});
     } catch (err: any) {
       setCreateTypeError(err.message || 'Failed to create content type');
     } finally {
@@ -235,24 +281,58 @@ const Dashboard: React.FC = () => {
     setEditTypeIndex(idx);
     setEditTypeName(contentTypes[idx].name);
     setEditFields(contentTypes[idx].fields.map(f => ({ ...f })));
+    // Initialize editEnumOptions for enum fields
+    const initialEditEnumOptions: Record<number, string[]> = {};
+    contentTypes[idx].fields.forEach((f, i) => {
+      if (f.type === 'enum' && Array.isArray((f as any).options)) {
+        initialEditEnumOptions[i] = [...((f as any).options as string[])];
+      }
+    });
+    setEditEnumOptions(initialEditEnumOptions);
     setShowEditType(true);
     setEditTypeError(null);
   };
   const handleEditFieldChange = (idx: number, key: 'name' | 'type' | 'optional' | 'relation', value: string | boolean) => {
     setEditFields(fields => fields.map((f, i) => i === idx ? { ...f, [key]: value } : f));
+    // Reset enum options if type changes
+    if (key === 'type' && value === 'enum') {
+      setEditEnumOptions(opts => ({ ...opts, [idx]: [''] }));
+    }
   };
   const handleEditAddField = () => setEditFields([...editFields, { name: '', type: 'text' }]);
   const handleEditRemoveField = (idx: number) => setEditFields(editFields.filter((_, i) => i !== idx));
+  const handleEditEnumOptionChange = (fieldIdx: number, optIdx: number, value: string) => {
+    setEditEnumOptions(opts => ({
+      ...opts,
+      [fieldIdx]: opts[fieldIdx].map((opt, i) => i === optIdx ? value : opt)
+    }));
+  };
+  const handleEditAddEnumOption = (fieldIdx: number) => {
+    setEditEnumOptions(opts => ({
+      ...opts,
+      [fieldIdx]: [...(opts[fieldIdx] || []), '']
+    }));
+  };
+  const handleEditRemoveEnumOption = (fieldIdx: number, optIdx: number) => {
+    setEditEnumOptions(opts => ({
+      ...opts,
+      [fieldIdx]: opts[fieldIdx].filter((_, i) => i !== optIdx)
+    }));
+  };
   const handleEditType = async () => {
     if (editTypeIndex === null) return;
     if (!editTypeName.trim() || editFields.some(f => !f.name.trim())) {
       setEditTypeError('Type name and all field names are required');
       return;
     }
+    // Attach enum options to fields
+    const fieldsWithOptions = editFields.map((f, idx) =>
+      f.type === 'enum' ? { ...f, options: (editEnumOptions[idx] || []).filter(opt => opt.trim()) } : f
+    );
     setEditTypeLoading(true);
     setEditTypeError(null);
     try {
-      const updated = await api.updateContentType(contentTypes[editTypeIndex].id, { name: editTypeName, fields: editFields });
+      const updated = await api.updateContentType(contentTypes[editTypeIndex].id, { name: editTypeName, fields: fieldsWithOptions });
       setContentTypes(types => types.map((t, i) => i === editTypeIndex ? updated : t));
       setShowEditType(false);
     } catch (err: any) {
@@ -318,30 +398,59 @@ const Dashboard: React.FC = () => {
 
   // Add logout handler
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     navigate('/login');
   };
+
+  const navItems = [
+    { label: 'Users', icon: <PeopleIcon />, path: '/users', admin: true },
+    { label: 'Activity Log', icon: <ListAltIcon />, path: '/activity-log', admin: true },
+  ];
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Full-width Navbar at the top */}
       <AppBar position="static" elevation={0} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, mb: 1 }}>
-        <Toolbar>
-          <DashboardIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+        <Toolbar sx={{ gap: 2, minHeight: 64 }}>
+          <DashboardIcon sx={{ mr: 1 }} />
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, letterSpacing: '-0.01em' }}>
             Minimal CMS Dashboard
           </Typography>
           <Chip
-            icon={<StorageIcon />}
+            icon={<RocketLaunchIcon />}
             label={serverHealthy ? 'Server Online' : 'Server Offline'}
             color={serverHealthy ? 'success' : 'error'}
             size="small"
-            sx={{ mr: 2 }}
+            sx={{ mr: 1, fontWeight: 600 }}
           />
-          <IconButton color="inherit" onClick={handleRefresh} disabled={loading}>
+          <IconButton color="inherit" onClick={handleRefresh} disabled={loading} sx={{ mr: 1 }}>
             <RefreshIcon />
           </IconButton>
-          <Button color="inherit" onClick={handleLogout} sx={{ ml: 2 }}>
+          <IconButton
+            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+            sx={{
+              ml: 1,
+              bgcolor: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(6px)',
+              borderRadius: '50%',
+              transition: 'background 0.2s',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.18)',
+              },
+              color: 'inherit',
+              boxShadow: mode === 'dark' ? '0 2px 8px 0 rgba(0,0,0,0.15)' : '0 2px 8px 0 rgba(0,0,0,0.05)',
+            }}
+            size="large"
+          >
+            {mode === 'dark' ? <LightModeIcon /> : <NightlightIcon />}
+          </IconButton>
+          <Button color="inherit" startIcon={<PeopleIcon />} sx={{ ml: 1 }} onClick={() => navigate('/users')}>
+            Users
+          </Button>
+          <Button color="inherit" onClick={() => navigate('/activity-log')} sx={{ ml: 1 }}>
+            Activity Log
+          </Button>
+          <Button color="inherit" onClick={handleLogout} sx={{ ml: 1 }}>
             Logout
           </Button>
         </Toolbar>
@@ -433,7 +542,8 @@ const Dashboard: React.FC = () => {
                         onChange={e => handleFieldChange(idx, 'type', e.target.value)}
                         size="small"
                         variant="outlined"
-                        sx={{ flex: 1, minWidth: 100, mb: { xs: 1, md: 0 } }}
+                        sx={{ flex: 2, ml: 1, minWidth: 120, mb: { xs: 1, md: 0 } }}
+                        displayEmpty
                       >
                         <MenuItem value="text">Text</MenuItem>
                         <MenuItem value="number">Number</MenuItem>
@@ -441,6 +551,8 @@ const Dashboard: React.FC = () => {
                         <MenuItem value="boolean">Boolean</MenuItem>
                         <MenuItem value="relation">Relation</MenuItem>
                         <MenuItem value="media">Media</MenuItem>
+                        <MenuItem value="enum">Enum</MenuItem>
+                        <MenuItem value="price">Price</MenuItem>
                       </Select>
                       {field.type === 'relation' && (
                         <Select
@@ -456,6 +568,26 @@ const Dashboard: React.FC = () => {
                             <MenuItem key={ct.id} value={ct.id}>{ct.name}</MenuItem>
                           ))}
                         </Select>
+                      )}
+                      {field.type === 'enum' && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="caption">Enum Options</Typography>
+                          {(enumOptions[idx] || ['']).map((opt, optIdx) => (
+                            <Box key={optIdx} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                              <TextField
+                                value={opt}
+                                onChange={e => handleEnumOptionChange(idx, optIdx, e.target.value)}
+                                size="small"
+                                placeholder={`Option ${optIdx + 1}`}
+                                sx={{ mr: 1 }}
+                              />
+                              <IconButton onClick={() => handleRemoveEnumOption(idx, optIdx)} disabled={(enumOptions[idx] || []).length === 1} size="small" color="error">
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ))}
+                          <Button onClick={() => handleAddEnumOption(idx)} size="small" variant="outlined">Add Option</Button>
+                        </Box>
                       )}
                       <FormControlLabel
                         control={
@@ -492,6 +624,16 @@ const Dashboard: React.FC = () => {
             <Dialog open={showEditType} onClose={() => setShowEditType(false)} maxWidth="md" fullWidth>
               <DialogTitle>Edit Content Type</DialogTitle>
               <DialogContent>
+                {editTypeIndex !== null && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      Content Type ID
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {contentTypes[editTypeIndex].id}
+                    </Typography>
+                  </Box>
+                )}
                 <TextField
                   label="Type Name"
                   value={editTypeName}
@@ -519,7 +661,8 @@ const Dashboard: React.FC = () => {
                         onChange={e => handleEditFieldChange(idx, 'type', e.target.value)}
                         size="small"
                         variant="outlined"
-                        sx={{ flex: 1, minWidth: 100, mb: { xs: 1, md: 0 } }}
+                        sx={{ flex: 2, ml: 1, minWidth: 120, mb: { xs: 1, md: 0 } }}
+                        displayEmpty
                       >
                         <MenuItem value="text">Text</MenuItem>
                         <MenuItem value="number">Number</MenuItem>
@@ -527,6 +670,8 @@ const Dashboard: React.FC = () => {
                         <MenuItem value="boolean">Boolean</MenuItem>
                         <MenuItem value="relation">Relation</MenuItem>
                         <MenuItem value="media">Media</MenuItem>
+                        <MenuItem value="enum">Enum</MenuItem>
+                        <MenuItem value="price">Price</MenuItem>
                       </Select>
                       {field.type === 'relation' && (
                         <Select
@@ -542,6 +687,26 @@ const Dashboard: React.FC = () => {
                             <MenuItem key={ct.id} value={ct.id}>{ct.name}</MenuItem>
                           ))}
                         </Select>
+                      )}
+                      {field.type === 'enum' && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="caption">Enum Options</Typography>
+                          {(editEnumOptions[idx] || ['']).map((opt, optIdx) => (
+                            <Box key={optIdx} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                              <TextField
+                                value={opt}
+                                onChange={e => handleEditEnumOptionChange(idx, optIdx, e.target.value)}
+                                size="small"
+                                placeholder={`Option ${optIdx + 1}`}
+                                sx={{ mr: 1 }}
+                              />
+                              <IconButton onClick={() => handleEditRemoveEnumOption(idx, optIdx)} disabled={(editEnumOptions[idx] || []).length === 1} size="small" color="error">
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ))}
+                          <Button onClick={() => handleEditAddEnumOption(idx)} size="small" variant="outlined">Add Option</Button>
+                        </Box>
                       )}
                       <FormControlLabel
                         control={
@@ -606,6 +771,7 @@ const Dashboard: React.FC = () => {
                   onDelete: handleDeleteContent,
                   density: 'compact',
                   tableBorder: true,
+                  fetchContents: fetchContents,
                 }}
               >
                 {error && contents.length === 0 && (

@@ -1,10 +1,11 @@
-export type FieldType = 'number' | 'text' | 'date' | 'boolean' | 'relation' | 'media';
+export type FieldType = 'number' | 'text' | 'date' | 'boolean' | 'relation' | 'media' | 'enum' | 'price';
 
 export interface ContentField {
   name: string;
   type: FieldType;
   optional?: boolean;
   relation?: string; // for relation type, the related content type id
+  options?: string[]; // for enum type, the allowed options
 }
 
 export interface ContentType {

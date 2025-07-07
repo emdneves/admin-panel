@@ -17,6 +17,8 @@ import {
   Card,
   CardContent,
   Stack,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -154,6 +156,13 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
               <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
                 {content.id}
               </Typography>
+              <Divider sx={{ my: 1 }} />
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                Content Type ID
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                {contentType.id}
+              </Typography>
             </Grid>
             <Grid item xs={6} sm={3} md={3}>
               <Typography variant="caption" color="text.secondary" fontWeight={500}>
@@ -257,77 +266,31 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
                       {content.data[field.name]?.toString() || <span style={{ color: '#aaa' }}>—</span>}
                     </Typography>
                   )
-                ) : field.type === 'media' ? (
-                  <Box>
-                    {typeof editedData[field.name] === 'string' && editedData[field.name] && (
-                      <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <img
-                          src={
-                            editedData[field.name].startsWith('/uploads/')
-                              ? `${BACKEND_URL}${editedData[field.name]}${getCacheBust(editedData[field.name])}`
-                              : `${editedData[field.name]}${getCacheBust(editedData[field.name])}`
-                          }
-                          alt="preview"
-                          style={{ maxWidth: 180, maxHeight: 180, objectFit: 'contain', background: '#fff', borderRadius: 2 }}
-                        />
-                        <Button
-                          variant="outlined"
-                          component="label"
-                          size="small"
-                        >
-                          Replace
-                          <input
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            onChange={async e => {
-                              if (e.target.files && e.target.files[0]) {
-                                // Try to get the content name from the first text field
-                                const nameField = contentType.fields.find(f => f.type === 'text');
-                                const contentName = nameField ? (editedData[nameField.name] || '') : '';
-                                const result = await uploadAndProcessImage(
-                                  e.target.files[0],
-                                  field.name,
-                                  contentType.id,
-                                  contentType.name,
-                                  String(contentName)
-                                );
-                                setEditedData(prev => ({ ...prev, [field.name]: result.url }));
-                              }
-                            }}
-                          />
-                        </Button>
-                      </Box>
-                    )}
-                    {(!editedData[field.name] || typeof editedData[field.name] !== 'string') && (
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        size="small"
-                      >
-                        Upload Image
-                        <input
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          onChange={async e => {
-                            if (e.target.files && e.target.files[0]) {
-                              const nameField = contentType.fields.find(f => f.type === 'text');
-                              const contentName = nameField ? (editedData[nameField.name] || '') : '';
-                              const result = await uploadAndProcessImage(
-                                e.target.files[0],
-                                field.name,
-                                contentType.id,
-                                contentType.name,
-                                String(contentName)
-                              );
-                              setEditedData(prev => ({ ...prev, [field.name]: result.url }));
-                            }
-                          }}
-                        />
-                      </Button>
-                    )}
-                  </Box>
+                ) : field.type === 'enum' ? (
+                  <Select
+                    fullWidth
+                    value={editedData[field.name] ?? ''}
+                    onChange={e => handleFieldChange(field.name, e.target.value)}
+                    size="small"
+                    displayEmpty
+                  >
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    {(field.options || []).map((opt: string) => (
+                      <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                    ))}
+                  </Select>
+                ) : field.type === 'boolean' ? (
+                  <Select
+                    fullWidth
+                    value={editedData[field.name] ?? ''}
+                    onChange={e => handleFieldChange(field.name, e.target.value === 'true' ? true : e.target.value === 'false' ? false : '')}
+                    size="small"
+                    displayEmpty
+                  >
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    <MenuItem value="true">True</MenuItem>
+                    <MenuItem value="false">False</MenuItem>
+                  </Select>
                 ) : field.type === 'number' ? (
                   <TextField
                     fullWidth

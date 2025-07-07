@@ -16,7 +16,7 @@ export interface EntityTableProps {
   columns: GridColDef[];
   rows: any[];
   loading: boolean;
-  onSelect: (row: any) => void;
+  onSelect?: (row: any) => void;
   selectedId?: string;
   onEdit?: (row: any) => void;
   onDelete?: (row: any) => void;
@@ -24,6 +24,9 @@ export interface EntityTableProps {
   tableBorder?: boolean;
   showRowNumber?: boolean;
   getRowHeight?: (params: any) => number;
+  processRowUpdate?: (newRow: any, oldRow: any) => Promise<any>;
+  experimentalFeatures?: any;
+  sx?: object;
 }
 
 // Custom Pagination component for DataGrid
@@ -61,6 +64,9 @@ const EntityTable: React.FC<EntityTableProps> = ({
   tableBorder = false,
   showRowNumber = false,
   getRowHeight,
+  processRowUpdate,
+  experimentalFeatures,
+  sx,
 }) => {
   const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const [menuRow, setMenuRow] = React.useState<any>(null);
@@ -145,11 +151,13 @@ const EntityTable: React.FC<EntityTableProps> = ({
             rows={rows}
             columns={finalColumns}
             getRowId={row => row.id}
-            onRowClick={params => onSelect(params.row)}
             rowSelectionModel={selectedId ? [selectedId] : []}
             density={density}
             sx={{
-              bgcolor: 'background.paper',
+              ...sx,
+              '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+                outline: 'none',
+              },
             }}
             getRowHeight={getRowHeight}
             localeText={{
@@ -168,6 +176,12 @@ const EntityTable: React.FC<EntityTableProps> = ({
             sortModel={sortModel}
             onSortModelChange={handleSortModelChange}
             pageSizeOptions={[50, 100, 500]}
+            processRowUpdate={processRowUpdate}
+            experimentalFeatures={experimentalFeatures}
+            onRowClick={onSelect ? params => onSelect(params.row) : undefined}
+            editMode="cell"
+            disableColumnMenu
+            isCellEditable={(params) => params.field !== 'actions'}
           />
           <Menu
             anchorEl={menuAnchorEl}

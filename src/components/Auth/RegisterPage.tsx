@@ -6,10 +6,12 @@ import axios from 'axios';
 const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('admin');
+  const [role] = useState('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,7 +20,7 @@ const RegisterPage: React.FC = () => {
     setError(null);
     setSuccess(false);
     try {
-      await axios.post('http://localhost:3000/register', { email, password, role });
+      await axios.post('http://localhost:3000/register', { email, password, role, first_name: firstName, last_name: lastName });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 1500);
     } catch (err: any) {
@@ -30,10 +32,10 @@ const RegisterPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default' }}>
-      <Paper elevation={3} sx={{ p: 4, minWidth: 320 }}>
-        <Typography variant="h5" mb={2} fontWeight={700}>Register</Typography>
+      <Paper elevation={3} sx={{ p: 1, minWidth: 320 }}>
+        <Typography variant="h5" mb={1} fontWeight={700}>Register</Typography>
         <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
+          <Stack spacing={1}>
             <TextField
               label="Email"
               type="email"
@@ -41,6 +43,7 @@ const RegisterPage: React.FC = () => {
               onChange={e => setEmail(e.target.value)}
               required
               fullWidth
+              sx={{ mb: 0.25 }}
             />
             <TextField
               label="Password"
@@ -49,23 +52,32 @@ const RegisterPage: React.FC = () => {
               onChange={e => setPassword(e.target.value)}
               required
               fullWidth
+              sx={{ mb: 0.25 }}
             />
             <TextField
-              label="Role"
-              select
-              value={role}
-              onChange={e => setRole(e.target.value)}
+              label="First Name"
+              type="text"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+              required
               fullWidth
-            >
-              <MenuItem value="admin">Admin</MenuItem>
-              <MenuItem value="user">User</MenuItem>
-            </TextField>
-            {error && <Alert severity="error">{error}</Alert>}
-            {success && <Alert severity="success">Registration successful! Redirecting to login...</Alert>}
-            <Button type="submit" variant="contained" color="primary" disabled={loading} fullWidth>
+              sx={{ mb: 0.25 }}
+            />
+            <TextField
+              label="Last Name"
+              type="text"
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+              required
+              fullWidth
+              sx={{ mb: 0.25 }}
+            />
+            {error && <Alert severity="error" sx={{ mb: 0.25 }}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mb: 0.25 }}>Registration successful! Redirecting to login...</Alert>}
+            <Button type="submit" variant="contained" color="primary" disabled={loading} fullWidth sx={{ mt: 0.25, mb: 0.25, minHeight: 32 }}>
               {loading ? 'Registering...' : 'Register'}
             </Button>
-            <Button color="secondary" onClick={() => navigate('/login')} fullWidth>
+            <Button color="secondary" onClick={() => navigate('/login')} fullWidth sx={{ mt: 0.25, minHeight: 32 }}>
               Back to Login
             </Button>
           </Stack>

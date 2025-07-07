@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,12 +17,15 @@ import {
   Divider,
   Stack,
   Chip,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { CreateContentInput, ContentType } from '../../types';
 import { Close as CloseIcon, Add as AddIcon } from '@mui/icons-material';
 import axios from 'axios';
 import { uploadAndProcessImage } from '../../utils/uploadAndProcessImage';
+import api from '../../services/api';
 
 interface ContentFormProps {
   open: boolean;
@@ -48,7 +51,43 @@ const ContentForm: React.FC<ContentFormProps> = ({
   const [mediaFiles, setMediaFiles] = useState<{ [key: string]: File | null }>({});
   const [mediaSizeErrors, setMediaSizeErrors] = useState<{ [key: string]: string }>({});
   const [mediaInfo, setMediaInfo] = useState<{ [key: string]: { name: string; size: number; type: string } | null }>({});
+  const [relationOptions, setRelationOptions] = useState<Record<string, { id: string; label: string }[]>>({});
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  useEffect(() => {
+    // Fetch relation options for all relation fields
+    const fetchRelations = async () => {
+      const relFields = contentType.fields.filter(f => f.type === 'relation' && f.relation);
+      const newOptions: Record<string, { id: string; label: string }[]> = {};
+      for (const field of relFields) {
+        try {
+          const items = await api.listContent(field.relation);
+          // Fetch the referenced content type to know which field to use as label
+          let labelKeys = ['name', 'title', 'label', 'id'];
+          try {
+            const refType = await api.getContentType(field.relation!);
+            // Prioritize fields that exist in the referenced content type
+            labelKeys = ['name', 'title', 'label', 'id'].filter(key => refType.fields.some((f: any) => f.name === key)).concat('id');
+          } catch {}
+          newOptions[field.name] = items.map(item => {
+            let label = item.id;
+            for (const key of labelKeys) {
+              if (item.data[key]) {
+                label = String(item.data[key]);
+                break;
+              }
+            }
+            return { id: item.id, label };
+          });
+        } catch {
+          newOptions[field.name] = [];
+        }
+      }
+      setRelationOptions(newOptions);
+    };
+    fetchRelations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentType]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -147,6 +186,14 @@ const ContentForm: React.FC<ContentFormProps> = ({
         </Box>
       </DialogTitle>
       <DialogContent>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={500}>
+            Content Type ID
+          </Typography>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+            {contentType.id}
+          </Typography>
+        </Box>
         <form onSubmit={handleSubmit}>
         <Stack spacing={2}>
           {contentType.fields.map((field, idx) => (
@@ -155,7 +202,47 @@ const ContentForm: React.FC<ContentFormProps> = ({
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 500 }}>
                   {field.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} {field.optional && <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>}
                 </Typography>
-                {field.type === 'number' ? (
+                {field.type === 'relation' ? (
+                  <Select
+                    fullWidth
+                    value={fields[field.name] ?? ''}
+                    onChange={e => handleFieldChange(field.name, e.target.value)}
+                    error={!!errors[field.name]}
+                    displayEmpty
+                    size="small"
+                  >
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    {(relationOptions[field.name] || []).map(option => (
+                      <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                    ))}
+                  </Select>
+                ) : field.type === 'enum' ? (
+                  <Select
+                    fullWidth
+                    value={fields[field.name] ?? ''}
+                    onChange={e => handleFieldChange(field.name, e.target.value)}
+                    error={!!errors[field.name]}
+                    displayEmpty
+                    size="small"
+                  >
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    {(field.options || []).map((opt: string) => (
+                      <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                    ))}
+                  </Select>
+                ) : field.type === 'price' ? (
+                  <TextField
+                    fullWidth
+                    type="number"
+                    inputProps={{ step: '0.01' }}
+                    value={fields[field.name] ?? ''}
+                    onChange={e => handleFieldChange(field.name, e.target.value)}
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name]}
+                    size="small"
+                    placeholder="Enter price"
+                  />
+                ) : field.type === 'number' ? (
                   <TextField
                     fullWidth
                     type="number"
