@@ -9,10 +9,10 @@ import NightlightIcon from '@mui/icons-material/Nightlight';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import PeopleIcon from '@mui/icons-material/People';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import EntityTable, { EntityTableProps } from './Table/EntityTable';
-import api from '../services/api';
+import EntityTable from "../Table/EntityTable";
+import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { TreeView, TreeItem } from '@mui/lab';
 
 interface ActivityLogPageProps {
@@ -251,8 +251,25 @@ const ActivityLogPage: React.FC<ActivityLogPageProps> = ({ mode, setMode }) => {
                   label="User"
                   value={userId}
                   onChange={e => setUserId(e.target.value)}
+                  variant="outlined"
                   size="small"
-                  sx={{ minWidth: 180 }}
+                  sx={{
+                    minWidth: 150,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                    height: 40,
+                    '& .MuiInputBase-root': {
+                      height: 40,
+                      alignItems: 'center',
+                    },
+                    '& .MuiSelect-select': {
+                      paddingTop: '8.5px',
+                      paddingBottom: '8.5px',
+                      minHeight: 'unset',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                  }}
                 >
                   <MenuItem value="">All Users</MenuItem>
                   {users.map(u => (
@@ -264,8 +281,25 @@ const ActivityLogPage: React.FC<ActivityLogPageProps> = ({ mode, setMode }) => {
                   label="Action Type"
                   value={actionType}
                   onChange={e => setActionType(e.target.value)}
+                  variant="outlined"
                   size="small"
-                  sx={{ minWidth: 150 }}
+                  sx={{
+                    minWidth: 150,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                    height: 40,
+                    '& .MuiInputBase-root': {
+                      height: 40,
+                      alignItems: 'center',
+                    },
+                    '& .MuiSelect-select': {
+                      paddingTop: '8.5px',
+                      paddingBottom: '8.5px',
+                      minHeight: 'unset',
+                      display: 'flex',
+                      alignItems: 'center',
+                    },
+                  }}
                 >
                   {ACTION_TYPES.map(a => (
                     <MenuItem key={a.value} value={a.value}>{a.label}</MenuItem>

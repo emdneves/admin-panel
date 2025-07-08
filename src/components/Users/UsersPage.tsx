@@ -82,6 +82,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ mode, setMode }) => {
           minHeight: 24,
           fontSize: 13,
           color: theme.palette.mode === 'dark' ? '#fff' : undefined,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}>{params.value}</span>
       ),
     },
@@ -101,6 +104,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ mode, setMode }) => {
           minHeight: 24,
           fontSize: 13,
           color: theme.palette.mode === 'dark' ? '#fff' : undefined,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}>{params.value}</span>
       ),
     },
@@ -120,6 +126,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ mode, setMode }) => {
           minHeight: 24,
           fontSize: 13,
           color: theme.palette.mode === 'dark' ? '#fff' : undefined,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}>{params.value}</span>
       ),
     },
@@ -141,6 +150,9 @@ const UsersPage: React.FC<UsersPageProps> = ({ mode, setMode }) => {
           minHeight: 24,
           fontSize: 13,
           color: theme.palette.mode === 'dark' ? '#fff' : undefined,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}>{params.value}</span>
       ),
     },

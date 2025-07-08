@@ -535,6 +535,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                         onChange={e => handleFieldChange(idx, 'name', e.target.value)}
                         size="small"
                         variant="outlined"
+                        fullWidth
                         sx={{ flex: 2, minWidth: 120, mb: { xs: 1, md: 0 } }}
                       />
                       <Select
@@ -542,6 +543,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                         onChange={e => handleFieldChange(idx, 'type', e.target.value)}
                         size="small"
                         variant="outlined"
+                        fullWidth
                         sx={{ flex: 2, ml: 1, minWidth: 120, mb: { xs: 1, md: 0 } }}
                         displayEmpty
                       >
@@ -560,6 +562,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                           onChange={e => handleFieldChange(idx, 'relation', e.target.value)}
                           size="small"
                           variant="outlined"
+                          fullWidth
                           sx={{ flex: 2, ml: 1, minWidth: 120, mb: { xs: 1, md: 0 } }}
                           displayEmpty
                         >
@@ -579,6 +582,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                                 onChange={e => handleEnumOptionChange(idx, optIdx, e.target.value)}
                                 size="small"
                                 placeholder={`Option ${optIdx + 1}`}
+                                fullWidth
                                 sx={{ mr: 1 }}
                               />
                               <IconButton onClick={() => handleRemoveEnumOption(idx, optIdx)} disabled={(enumOptions[idx] || []).length === 1} size="small" color="error">
@@ -646,14 +650,16 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>Fields</Typography>
                 <Divider sx={{ mb: 2 }} />
                 <Stack spacing={2}>
+                  {/* Reduce spacing between rows */}
                   {editFields.map((field, idx) => (
-                    <Paper key={idx} elevation={2} sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Box key={idx} sx={{ p: 1, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                       <TextField
                         label="Field Name"
                         value={field.name}
                         onChange={e => handleEditFieldChange(idx, 'name', e.target.value)}
                         size="small"
                         variant="outlined"
+                        fullWidth
                         sx={{ flex: 2, minWidth: 120, mb: { xs: 1, md: 0 } }}
                       />
                       <Select
@@ -661,6 +667,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                         onChange={e => handleEditFieldChange(idx, 'type', e.target.value)}
                         size="small"
                         variant="outlined"
+                        fullWidth
                         sx={{ flex: 2, ml: 1, minWidth: 120, mb: { xs: 1, md: 0 } }}
                         displayEmpty
                       >
@@ -679,6 +686,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                           onChange={e => handleEditFieldChange(idx, 'relation', e.target.value)}
                           size="small"
                           variant="outlined"
+                          fullWidth
                           sx={{ flex: 2, ml: 1, minWidth: 120, mb: { xs: 1, md: 0 } }}
                           displayEmpty
                         >
@@ -698,6 +706,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                                 onChange={e => handleEditEnumOptionChange(idx, optIdx, e.target.value)}
                                 size="small"
                                 placeholder={`Option ${optIdx + 1}`}
+                                fullWidth
                                 sx={{ mr: 1 }}
                               />
                               <IconButton onClick={() => handleEditRemoveEnumOption(idx, optIdx)} disabled={(editEnumOptions[idx] || []).length === 1} size="small" color="error">
@@ -723,7 +732,7 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                       <IconButton onClick={() => handleEditRemoveField(idx)} disabled={editFields.length === 1} color="error" size="small" sx={{ ml: 1 }}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
-                    </Paper>
+                    </Box>
                   ))}
                 </Stack>
                 <Button onClick={handleEditAddField} startIcon={<AddIcon />} variant="outlined" fullWidth sx={{ mt: 2, mb: 1 }}>

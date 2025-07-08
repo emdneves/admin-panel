@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Theme } from '@mui/material/styles';
 import {
   Dialog,
   DialogTitle,
@@ -197,7 +198,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
         <form onSubmit={handleSubmit}>
         <Stack spacing={2}>
           {contentType.fields.map((field, idx) => (
-            <Paper key={field.name} elevation={1} sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box key={field.name} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 500 }}>
                   {field.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} {field.optional && <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>}
@@ -257,14 +258,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
                   <DatePicker
                     value={fields[field.name] as Date | null}
                     onChange={date => handleFieldChange(field.name, date)}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        error: !!errors[field.name],
-                        helperText: errors[field.name],
-                        size: 'small',
-                      },
-                    }}
+                    slotProps={{ textField: { fullWidth: true, error: !!errors[field.name], helperText: errors[field.name], size: 'small' } }}
                   />
                 ) : field.type === 'media' ? (
                   <Box>
@@ -356,7 +350,7 @@ const ContentForm: React.FC<ContentFormProps> = ({
                 )}
               </Box>
               {field.optional && <Chip label="Optional" size="small" sx={{ ml: 2 }} />}
-            </Paper>
+            </Box>
           ))}
         </Stack>
         <DialogActions sx={{ justifyContent: 'flex-end', px: 3, pb: 2 }}>

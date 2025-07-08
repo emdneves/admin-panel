@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Theme } from '@mui/material/styles';
 import {
   Dialog,
   DialogTitle,
@@ -213,13 +214,7 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
           }}
         >
           {contentType.fields.map(field => (
-            <Paper
-              key={field.name}
-              elevation={1}
-              sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}
-              onDoubleClick={() => setIsEditing(true)}
-              style={{ cursor: !isEditing ? 'pointer' : undefined }}
-            >
+            <Box key={field.name} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 500 }}>
                   {field.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} {field.optional && <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>}
@@ -266,7 +261,7 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
                       {content.data[field.name]?.toString() || <span style={{ color: '#aaa' }}>—</span>}
                     </Typography>
                   )
-                ) : field.type === 'enum' ? (
+                ) : field.type === 'relation' ? (
                   <Select
                     fullWidth
                     value={editedData[field.name] ?? ''}
@@ -291,7 +286,7 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
                     <MenuItem value="true">True</MenuItem>
                     <MenuItem value="false">False</MenuItem>
                   </Select>
-                ) : field.type === 'number' ? (
+                ) : field.type === 'price' || field.type === 'number' ? (
                   <TextField
                     fullWidth
                     type="number"
@@ -303,12 +298,7 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
                   <DatePicker
                     value={editedData[field.name] ? new Date(editedData[field.name]) : null}
                     onChange={date => handleFieldChange(field.name, date)}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
+                    slotProps={{ textField: { fullWidth: true, size: 'small' } }}
                   />
                 ) : (
                   <TextField
@@ -322,7 +312,7 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
                 )}
               </Box>
               {field.optional && <Chip label="Optional" size="small" sx={{ ml: 2 }} />}
-            </Paper>
+            </Box>
           ))}
         </Stack>
         {deleteConfirm && (
