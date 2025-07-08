@@ -9,10 +9,10 @@ import NightlightIcon from '@mui/icons-material/Nightlight';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import PeopleIcon from '@mui/icons-material/People';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import EntityTable, { EntityTableProps } from './Table/EntityTable';
-import api from '../services/api';
+import EntityTable, { EntityTableProps } from '../Table/EntityTable';
+import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { TreeView, TreeItem } from '@mui/lab';
 
 interface ActivityLogPageProps {
