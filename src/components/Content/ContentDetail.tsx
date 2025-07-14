@@ -126,7 +126,9 @@ const ContentDetail: React.FC<ContentDetailProps> = ({
       onDeleteSuccess();
       onClose();
     } catch (error) {
-      // Optionally show error
+      console.error('Delete content error:', error);
+      alert('Failed to delete content: ' + ((error as any)?.message || 'Unknown error'));
+      // Don't close the dialog on error
     } finally {
       setLoading(false);
     }

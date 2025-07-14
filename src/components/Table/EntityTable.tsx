@@ -6,6 +6,8 @@ import {
   gridPageCountSelector,
   gridPageSelector,
   gridPageSizeSelector,
+  useGridApiRef,
+  GridApiContext,
 } from '@mui/x-data-grid';
 import { Box, CircularProgress, Tooltip, IconButton, Menu, MenuItem } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -72,22 +74,11 @@ const EntityTable: React.FC<EntityTableProps> = ({
   const [menuRow, setMenuRow] = React.useState<any>(null);
 
   // Get page and pageSize for row numbering
-  const apiRef = React.useRef<any>(null);
   const [page, setPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(50);
   const [sortModel, setSortModel] = React.useState([
     { field: 'name', sort: 'asc' as const },
   ]);
-
-  // DataGrid will call this when page or pageSize changes
-  const handlePaginationModelChange = (model: { page: number; pageSize: number }) => {
-    setPage(model.page);
-    setPageSize(model.pageSize);
-  };
-
-  const handleSortModelChange = (model: any) => {
-    setSortModel(model);
-  };
 
   // Add actions column if needed
   const finalColumns = React.useMemo(() => {
@@ -102,10 +93,9 @@ const EntityTable: React.FC<EntityTableProps> = ({
         sortable: false,
         filterable: false,
         renderCell: (params: GridRenderCellParams) => {
-          // Use apiRef to get the current visible sorted rows
-          const visibleRows = apiRef.current?.getSortedRowIds?.() || [];
-          const visibleIndex = visibleRows.indexOf(params.id);
-          return <span>{visibleIndex + 1}</span>;
+          // Simple row numbering based on params.api.getRowIndexRelativeToVisibleRows
+          const rowIndex = params.api.getRowIndexRelativeToVisibleRows(params.id);
+          return <span>{rowIndex + 1}</span>;
         },
       };
       cols = [rowNumberCol, ...cols];
@@ -138,6 +128,16 @@ const EntityTable: React.FC<EntityTableProps> = ({
     return cols;
   }, [columns, onEdit, onDelete, showRowNumber]);
 
+  // DataGrid will call this when page or pageSize changes
+  const handlePaginationModelChange = (model: { page: number; pageSize: number }) => {
+    setPage(model.page);
+    setPageSize(model.pageSize);
+  };
+
+  const handleSortModelChange = (model: any) => {
+    setSortModel(model);
+  };
+
   return (
     <Box sx={{ height: '100%', width: '100%' }}>
       {loading ? (
@@ -147,8 +147,7 @@ const EntityTable: React.FC<EntityTableProps> = ({
       ) : (
         <>
           <DataGrid
-            apiRef={apiRef}
-            rows={rows}
+            rows={rows || []}
             columns={finalColumns}
             getRowId={row => row.id}
             rowSelectionModel={selectedId ? [selectedId] : []}
@@ -166,9 +165,6 @@ const EntityTable: React.FC<EntityTableProps> = ({
               },
               noRowsLabel: 'No rows',
               footerRowSelected: () => '',
-            }}
-            slots={{
-              pagination: CustomPagination,
             }}
             pagination
             paginationModel={{ page, pageSize }}

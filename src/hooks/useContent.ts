@@ -84,6 +84,9 @@ export const useContent = () => {
             }));
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Failed to delete content');
+            // Don't throw the error, just set it in state
+            console.error('Delete content error:', error);
+            // Re-throw the error so the calling component can handle it
             throw error;
         }
     }, [setLoading, setError]);

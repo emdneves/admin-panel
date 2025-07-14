@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GridColDef, GridRenderCellParams, GridValueGetterParams, GridRowModel } from '@mui/x-data-grid';
 import { ContentItem, ContentType } from '../../types';
 import { format } from 'date-fns';
@@ -56,7 +56,10 @@ const ContentList: React.FC<ContentListProps> = ({
           try {
             const refType = await api.getContentType(field.relation!);
             labelKeys = ['name', 'title', 'label', 'id'].filter(key => refType.fields.some((f: any) => f.name === key)).concat('id');
-          } catch {}
+          } catch (error) {
+            console.warn(`Content type ${field.relation} not found for relation field ${field.name}. This might be a stale reference.`);
+            // Continue with default label keys
+          }
           const idToLabel: Record<string, string> = {};
           for (const item of items) {
             let label = item.id;
@@ -69,7 +72,8 @@ const ContentList: React.FC<ContentListProps> = ({
             idToLabel[item.id] = label;
           }
           newMaps[field.name] = idToLabel;
-        } catch {
+        } catch (error) {
+          console.warn(`Failed to fetch content for relation field ${field.name}:`, error);
           newMaps[field.name] = {};
         }
       }
@@ -88,7 +92,7 @@ const ContentList: React.FC<ContentListProps> = ({
     // add any other meta fields you want to show
   }));
 
-  const processRowUpdate = async (newRow: GridRowModel, oldRow: GridRowModel) => {
+  const processRowUpdate = useCallback(async (newRow: GridRowModel, oldRow: GridRowModel) => {
     setUpdatingRow(true);
     try {
       // Reconstruct data object from flat row
@@ -116,10 +120,10 @@ const ContentList: React.FC<ContentListProps> = ({
       setUpdatingRow(false);
       return oldRow;
     }
-  };
+  }, [contentType, fetchContents]);
 
   // Use built-in DataGrid singleSelect editor for enum fields for robustness
-  const columns: GridColDef[] = [
+  const columns: GridColDef[] = React.useMemo(() => [
     {
       field: 'id',
       headerName: 'ID',
@@ -228,10 +232,10 @@ const ContentList: React.FC<ContentListProps> = ({
         return 'Unknown';
       }
     }
-  ];
+  ], [contentType.fields, relationMaps, theme.palette.mode]);
 
   // Flexible row height based on image height
-  const getRowHeight = (params: any) => {
+  const getRowHeight = useCallback((params: any) => {
     // Find all media fields for this row
     const mediaFields = contentType.fields.filter(f => f.type === 'media');
     let maxHeight = 32;
@@ -242,29 +246,33 @@ const ContentList: React.FC<ContentListProps> = ({
       }
     }
     return maxHeight;
-  };
+  }, [contentType.fields, imageHeights]);
 
   return (
-    <EntityTable
-      columns={columns}
-      rows={flatRows}
-      loading={loading || updatingRow}
-      onSelect={onEdit ? undefined : onSelect}
-      selectedId={selectedId}
-      onEdit={onEdit ? (row => {
-        const original = contents.find(item => item.id === row.id);
-        if (original) onEdit(original);
-      }) : undefined}
-      onDelete={onDelete}
-      density={density}
-      tableBorder={tableBorder}
-      showRowNumber={true}
-      getRowHeight={getRowHeight}
-      // Enable inline editing
-      processRowUpdate={processRowUpdate}
-      experimentalFeatures={{ newEditingApi: true }}
-    />
+    <div>
+      <EntityTable
+        columns={columns}
+        rows={flatRows}
+        loading={loading || updatingRow}
+        onSelect={onEdit ? undefined : onSelect}
+        selectedId={selectedId}
+        onEdit={onEdit ? (row => {
+          const original = contents.find(item => item.id === row.id);
+          if (original) onEdit(original);
+        }) : undefined}
+        onDelete={onDelete}
+        density={density}
+        tableBorder={tableBorder}
+        showRowNumber={true}
+        getRowHeight={getRowHeight}
+        // Enable inline editing
+        processRowUpdate={processRowUpdate}
+        experimentalFeatures={{ newEditingApi: true }}
+      />
+    </div>
   );
 };
+
+ContentList.displayName = 'ContentList';
 
 export default ContentList;

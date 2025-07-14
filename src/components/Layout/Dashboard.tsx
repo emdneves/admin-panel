@@ -389,11 +389,17 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
     selectContent(content);
     // Optionally open a modal for editing
   };
-  const handleDeleteContent = (content: ContentItem) => {
-    selectContent(content);
-    // Optionally open a modal for deleting
-    // Or call deleteContent(content.id) directly
-    deleteContent(content.id);
+  const handleDeleteContent = async (content: ContentItem) => {
+    try {
+      await deleteContent(content.id);
+      // Refresh the content list after successful deletion
+      if (selectedContentType) {
+        await fetchContents(selectedContentType.id);
+      }
+    } catch (error) {
+      console.error('Delete content error:', error);
+      alert('Failed to delete content: ' + ((error as any)?.message || 'Unknown error'));
+    }
   };
 
   // Add logout handler
@@ -811,7 +817,12 @@ const Dashboard: React.FC<DashboardProps> = ({ mode, setMode }) => {
                       await fetchContentById(selectedContent.id);
                     }
                   }}
-                  onDeleteSuccess={() => {}}
+                  onDeleteSuccess={async () => {
+                    // Refresh the content list after successful deletion
+                    if (selectedContentType) {
+                      await fetchContents(selectedContentType.id);
+                    }
+                  }}
                   contentType={selectedContentType}
                 />
               )}
