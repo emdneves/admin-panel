@@ -1,0 +1,69 @@
+name: Deploy Admin Panel Frontend
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  deploy-admin-panel:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Deploy Admin Panel Frontend to VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          cd /root/deployment/admin-panel
+
+          echo "🚀 Starting Admin Panel Frontend deployment..."
+
+          # Ensure we're on the correct branch and pull the latest code
+          git fetch origin
+          git checkout main
+          git reset --hard origin/main
+
+          # Stop and remove any running admin-panel containers
+          echo "🛑 Stopping and removing old admin-panel containers..."
+          docker-compose down
+
+          # Remove any containers with the same name (just in case)
+          docker rm -f admin-panel-app || true
+
+          # Remove old images (optional, for disk space)
+          docker image prune -f
+
+          # Build the new image
+          echo "🔨 Building new admin-panel image..."
+          docker-compose build --no-cache admin-panel
+
+          # Start the new container
+          echo "▶️ Starting new admin-panel container..."
+          docker-compose up -d admin-panel
+
+          # Wait for the container to start
+          sleep 10
+
+          # Show status
+          docker ps --filter name=admin-panel-app
+
+          # Health check - try both possible endpoints
+          if curl -f http://localhost:3001/ || curl -f http://localhost/; then
+            echo "✅ Admin panel frontend is healthy"
+          else
+            echo "❌ Admin panel frontend health check failed"
+            docker logs admin-panel-app
+            exit 1
+          fi
+
+          echo "🎉 Admin Panel Frontend deployment completed successfully!" 
