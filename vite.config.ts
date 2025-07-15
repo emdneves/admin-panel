@@ -6,8 +6,4 @@ export default defineConfig({
   server: {
     open: true,
   },
-  define: {
-    // Ensure environment variables are available
-    'process.env': {}
-  },
 }); 
