@@ -20,7 +20,7 @@ const RegisterPage: React.FC = () => {
     setError(null);
     setSuccess(false);
     try {
-      await axios.post('http://localhost:3000/register', { email, password, role, first_name: firstName, last_name: lastName });
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/register`, { email, password, role, first_name: firstName, last_name: lastName });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 1500);
     } catch (err: any) {

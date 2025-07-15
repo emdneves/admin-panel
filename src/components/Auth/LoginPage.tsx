@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post('http://localhost:3000/login', { email, password });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/login`, { email, password });
       if (res.data && res.data.token) {
         login(res.data.token, res.data.role, email);
         navigate('/');

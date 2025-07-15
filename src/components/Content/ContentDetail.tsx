@@ -44,7 +44,7 @@ interface ContentDetailProps {
   contentType: ContentType;
 }
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Helper to add cache-busting param
 const cacheBust = () => `?t=${Date.now()}`;
