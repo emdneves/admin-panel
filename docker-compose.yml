@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  client:
+  admin-panel:
     build: .
-    container_name: cms-client
+    container_name: admin-panel-app
     environment:
-      - REACT_APP_API_URL=http://localhost:3000
+      - REACT_APP_API_URL=http://209.74.83.122:3000
     ports:
-      - "3001:80"
+      - "3002:80"
     restart: unless-stopped
